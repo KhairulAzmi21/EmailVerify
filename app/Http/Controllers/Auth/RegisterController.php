@@ -6,6 +6,9 @@ use App\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Registered;
+use App\Mail\EmailVerification;
 
 class RegisterController extends Controller
 {
@@ -67,5 +70,34 @@ class RegisterController extends Controller
             'email' => $data['email'],
             'password' => bcrypt($data['password']),
         ]);
+    }
+
+    /**
+     * Handle a registration request for the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        $user = $this->create($request->all());
+
+        \Mail::to($user)->send(new EmailVerification($user));
+        //$this->guard()->login($user);
+        session()->flash('success', 'Please check your email for verification');
+
+        return $this->registered($request, $user)
+                        ?: redirect()->route('register');
+    }
+
+    public function verifiedEmail($token)
+    {
+        $user = User::whereToken($token)->firstOrFail()->confirmEmail();
+        
+        session()->flash('success', 'Email has been verified. Please login.');
+
+        return redirect('login');
     }
 }

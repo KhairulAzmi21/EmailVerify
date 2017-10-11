@@ -17,4 +17,9 @@ Route::get('/', function () {
 
 Auth::routes();
 
+Route::namespace('Auth')->group(function () {
+    // Controllers Within The "App\Http\Controllers\Auth" Namespace
+    Route::get('register/confirm/{token}', 'RegisterController@verifiedEmail')->name('register.confirm');
+});
+
 Route::get('/home', 'HomeController@index')->name('home');
